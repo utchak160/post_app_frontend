@@ -1,0 +1,33 @@
+<mat-card>
+  <mat-spinner *ngIf="isLoading"></mat-spinner>
+  <form [formGroup]="form" (ngSubmit)="onSavePost()" *ngIf="!isLoading">
+    <mat-form-field appearance="fill">
+      <mat-label>Title</mat-label>
+      <input type="text"
+             placeholder="Title"
+             formControlName="title"
+             matInput>
+      <mat-error *ngIf="!form.get('title').valid">Please enter a valid title</mat-error>
+    </mat-form-field>
+    <br>
+    <button type="button" mat-stroked-button (click)="fileUplaoder.click()">Upload</button>
+    <br>
+    <input type="file" #fileUplaoder (change)="onSelect($event)">
+    <div class="preview-image" *ngIf="imagePreview !== '' && imagePreview && form.get('image').valid">
+      <img [src]="imagePreview" [alt]="form.value.title">
+    </div>
+    <br>
+    <mat-form-field appearance="fill">
+      <mat-label>Description</mat-label>
+      <textarea
+        placeholder="Description"
+        formControlName="description"
+        rows="6" matInput>
+      </textarea>
+      <mat-error *ngIf="!form.get('description').valid">Please enter a valid description</mat-error>
+    </mat-form-field>
+    <br>
+    <button type="submit" mat-raised-button color="primary">Create</button>
+  </form>
+</mat-card>
+

@@ -1,0 +1,16 @@
+.example-icon {
+  padding: 0 14px;
+}
+
+a {
+  text-decoration: none;
+  color: white;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+button:focus {
+  outline: none;
+}
