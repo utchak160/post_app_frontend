@@ -49,10 +49,24 @@ router.post('/api/posts', multer({storage: storage}).single('image'), (req, res,
 });
 
 router.get('/api/posts', async (req, res, next) => {
-  const posts = await Post.find();
-  res.send({
-    message: 'Post fetched Successfully',
-    posts: posts
+  const pageSize = +req.query.pageSize;
+  const currentPage = +req.query.page;
+  let fetchedPost;
+  const postQuery = Post.find();
+  if (pageSize && currentPage) {
+    postQuery
+      .skip(pageSize * (currentPage - 1))
+      .limit(pageSize)
+  }
+  postQuery.then(posts => {
+    fetchedPost = posts;
+    Post.count().then((count) => {
+      res.send({
+        message: 'Fetched Successfully',
+        posts: fetchedPost,
+        maxCount: count
+      });
+    });
   });
 });
 
@@ -76,8 +90,8 @@ router.put('/api/posts/:id', multer({storage: storage}).single('image'), (req, r
     imagePath: imagePath
   });
   console.log(post);
-  Post.updateOne({ _id: req.params.id }, post).then(result => {
-    res.status(200).json({ message: "Update successful!" });
+  Post.updateOne({_id: req.params.id}, post).then(result => {
+    res.status(200).json({message: "Update successful!"});
   });
 });
 

@@ -13,27 +13,29 @@ export class PostService {
 
   readonly baseURL = environment.BASE_URL;
   posts: Post[] = [];
-  PostSub = new Subject<Post[]>();
+  PostSub = new Subject<{ posts: Post[], pageCount: number }>();
 
   constructor(private http: HttpClient, private router: Router) {
   }
 
-  getPosts() {
-    // return [...this.posts];
-    return this.http.get<{ message: string, posts: any }>(this.baseURL + '/api/posts')
+  getPosts(pageSize: number, currentPage: number) {
+    const queryParams = `?pageSize=${pageSize}&page=${currentPage}`;
+    return this.http.get<{ message: string, posts: any, maxCount: number }>(this.baseURL + '/api/posts' + queryParams)
       .pipe(
         map((postData) => {
-          return postData.posts.map((post) => {
-            return {
-              title: post.title,
-              description: post.description,
-              id: post._id,
-              imagePath: post.imagePath
-            };
-          });
+          return {
+            post: postData.posts.map((post) => {
+              return {
+                title: post.title,
+                description: post.description,
+                id: post._id,
+                imagePath: post.imagePath
+              };
+            }), maxCount: postData.maxCount
+          };
         })).subscribe((res) => {
-        this.posts = res;
-        this.PostSub.next([...this.posts]);
+        this.posts = res.post;
+        this.PostSub.next({posts: [...this.posts], pageCount: res.maxCount});
       });
   }
 
@@ -48,9 +50,9 @@ export class PostService {
     postData.append('image', data.image);
 
     this.http.post<{ message: string, post: Post }>(this.baseURL + '/api/posts', postData).subscribe((res) => {
-      const post: Post = {id: res.post.id, title: data.title, description: data.description, imagePath: res.post.imagePath};
-      this.posts.push(post);
-      this.PostSub.next([...this.posts]);
+      // const post: Post = {id: res.post.id, title: data.title, description: data.description, imagePath: res.post.imagePath};
+      // this.posts.push(post);
+      // this.PostSub.next([...this.posts]);
       this.router.navigate(['/']);
     }, error => {
       console.log(error);
@@ -58,16 +60,6 @@ export class PostService {
   }
 
   updatePost(data, postId) {
-    // const post: Post = { id: postId, title: data.title, description: data.description, imagePath: null};
-    // this.http.put<{message: string}>(this.baseURL + '/api/posts/' + postId, post).subscribe((res) => {
-    //   const newPost = [...this.posts];
-    //   const oldPostIndex = newPost.findIndex(i => i.id === postId);
-    //   newPost[oldPostIndex] = post;
-    //   this.posts = newPost;
-    //   this.PostSub.next([...this.posts]);
-    //   this.router.navigate(['/']);
-    // });
-
     let postData: Post | FormData;
     if (typeof data.image === 'object') {
       postData = new FormData();
@@ -86,17 +78,17 @@ export class PostService {
     this.http
       .put(this.baseURL + '/api/posts/' + postId, postData)
       .subscribe(response => {
-        const updatedPosts = [...this.posts];
-        const oldPostIndex = updatedPosts.findIndex(p => p.id === postId);
-        const post: Post = {
-          id: postId,
-          title: data.title,
-          description: data.description,
-          imagePath: ''
-        };
-        updatedPosts[oldPostIndex] = post;
-        this.posts = updatedPosts;
-        this.PostSub.next([...this.posts]);
+        // const updatedPosts = [...this.posts];
+        // const oldPostIndex = updatedPosts.findIndex(p => p.id === postId);
+        // const post: Post = {
+        //   id: postId,
+        //   title: data.title,
+        //   description: data.description,
+        //   imagePath: ''
+        // };
+        // updatedPosts[oldPostIndex] = post;
+        // this.posts = updatedPosts;
+        // this.PostSub.next([...this.posts]);
         this.router.navigate(['/']);
       });
   }
@@ -115,10 +107,11 @@ export class PostService {
   }
 
   deletePost(id) {
-    this.http.delete<{ message: string }>(this.baseURL + '/api/posts/' + id).subscribe((res) => {
-      const newPosts = this.posts.filter((postData) => postData.id !== id);
-      this.posts = newPosts;
-      this.PostSub.next([...this.posts]);
-    });
+    return this.http.delete<{ message: string }>(this.baseURL + '/api/posts/' + id);
+    //   .subscribe((res) => {
+    //   const newPosts = this.posts.filter((postData) => postData.id !== id);
+    //   this.posts = newPosts;
+    //   this.PostSub.next([...this.posts]);
+    // });
   }
 }
