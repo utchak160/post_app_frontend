@@ -19,4 +19,12 @@ export class AuthService {
       console.log(error);
     });
   }
+  login(email: string, password: string) {
+    const authData: AuthData = {email, password};
+    this.http.post<{token: string}>(this.baseUrl + '/api/user/login', authData).subscribe((response) => {
+      console.log(response);
+    }, error => {
+      console.log(error);
+    });
+  }
 }
