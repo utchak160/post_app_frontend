@@ -3,6 +3,7 @@ const path = require('path');
 require('./db/mongoose');
 const bodyParser = require('body-parser');
 const postRoutes = require('./routes/posts');
+const UserRoutes = require('./routes/user');
 
 const app = express();
 
@@ -24,5 +25,6 @@ app.use((req, res, next) => {
 });
 
 app.use(postRoutes);
+app.use('/api/user', UserRoutes);
 
 module.exports = app;
