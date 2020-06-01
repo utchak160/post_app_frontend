@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const Post = require('../models/post');
+const checkAuth = require('../middleware/check-auth');
 
 const router = express.Router();
 
@@ -30,7 +31,7 @@ const storage = multer.diskStorage({
   }
 });
 
-router.post('/api/posts', multer({storage: storage}).single('image'), (req, res, next) => {
+router.post('/api/posts', checkAuth, multer({storage: storage}).single('image'), (req, res, next) => {
   const url = req.protocol + "://" + req.get("host");
   const post = new Post({
     title: req.body.title,
@@ -77,7 +78,7 @@ router.get('/api/posts/:id', async (req, res, next) => {
   }
 });
 
-router.put('/api/posts/:id', multer({storage: storage}).single('image'), (req, res, next) => {
+router.put('/api/posts/:id', checkAuth, multer({storage: storage}).single('image'), (req, res, next) => {
   let imagePath = req.body.imagePath;
   if (req.file) {
     const url = req.protocol + "://" + req.get("host");
@@ -95,7 +96,7 @@ router.put('/api/posts/:id', multer({storage: storage}).single('image'), (req, r
   });
 });
 
-router.delete('/api/posts/:id', async (req, res, next) => {
+router.delete('/api/posts/:id', checkAuth, async (req, res, next) => {
   await Post.deleteOne({_id: req.params.id});
   res.send({message: 'Removed Successfully'});
 });
