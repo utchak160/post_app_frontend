@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
-const Post = require('../models/post');
 const checkAuth = require('../middleware/check-auth');
+const postController = require('../controllers/post');
 
 const router = express.Router();
 
@@ -31,109 +31,14 @@ const storage = multer.diskStorage({
   }
 });
 
-router.post('/api/posts', checkAuth, multer({storage: storage}).single('image'), (req, res, next) => {
-  const url = req.protocol + "://" + req.get("host");
-  const post = new Post({
-    title: req.body.title,
-    description: req.body.description,
-    imagePath: url + "/images/" + req.file.filename,
-    author: req.authData.userId
-  });
-  post.save().then((createdPost) => {
-    res.status(201).send({
-      message: 'Post Added Successfully',
-      post: {
-        ...createdPost,
-        id: createdPost._id
-      },
-      author: createdPost.author
-    });
-  }).catch((e) => {
-    res.status(500).send({
-      message: 'Creating post failed!'
-    });
-  });
-});
+router.post('/api/posts', checkAuth, multer({storage: storage}).single('image'), postController.createPost);
 
-router.get('/api/posts', async (req, res, next) => {
-  const pageSize = +req.query.pageSize;
-  const currentPage = +req.query.page;
-  let fetchedPost;
-  const postQuery = Post.find();
-  if (pageSize && currentPage) {
-    postQuery
-      .skip(pageSize * (currentPage - 1))
-      .limit(pageSize)
-  }
-  postQuery.then(posts => {
-    fetchedPost = posts;
-    Post.count().then((count) => {
-      res.send({
-        message: 'Fetched Successfully',
-        posts: fetchedPost,
-        maxCount: count
-      });
-    });
-  }).catch(err => {
-    res.status(500).send({
-      message: 'Unable to fetch posts'
-    });
-  });
-});
+router.get('/api/posts', postController.getPosts);
 
-router.get('/api/posts/:id', async (req, res, next) => {
-  const post = await Post.findById(req.params.id);
-  if (post) {
-    res.send(post);
-  } else {
-    res.status(500).send({
-      message: 'Unable to fetch post'
-    });
-  }
-});
+router.get('/api/posts/:id', postController.getPost);
 
-router.put('/api/posts/:id', checkAuth, multer({storage: storage}).single('image'), (req, res, next) => {
-  let imagePath = req.body.imagePath;
-  if (req.file) {
-    const url = req.protocol + "://" + req.get("host");
-    imagePath = url + "/images/" + req.file.filename
-  }
-  const post = new Post({
-    _id: req.body.id,
-    title: req.body.title,
-    content: req.body.content,
-    imagePath: imagePath,
-    author: req.authData.userId
-  });
-  Post.updateOne({_id: req.params.id, author: req.authData.userId}, post).then(result => {
-    if (result.nModified > 0) {
-      res.status(200).json({message: "Update successful!"});
-    } else {
-      res.status(401).send({
-        message: 'Auth Failed'
-      });
-    }
-  }).catch(err => {
-    res.status(500).send({
-      message: 'Unable to Update post'
-    });
-  });
-});
+router.put('/api/posts/:id', checkAuth, multer({storage: storage}).single('image'), postController.updatePost);
 
-router.delete('/api/posts/:id', checkAuth, (req, res, next) => {
-  Post.deleteOne({_id: req.params.id, author: req.authData.userId}).then((result) => {
-    if (result.n > 0) {
-      res.send({message: 'Removed Successfully'});
-    } else {
-      res.status(401).send({
-        message: 'Auth Failed'
-      });
-    }
-  }).catch(err => {
-    res.status(500).send({
-      message: 'Unable to delete posts'
-    });
-  });
-});
+router.delete('/api/posts/:id', checkAuth, postController.deletePost);
 
 module.exports = router;
