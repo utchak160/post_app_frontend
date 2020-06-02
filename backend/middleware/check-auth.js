@@ -9,6 +9,7 @@ module.exports = (req, res, next) => {
         message: 'Auth Failed'
       });
     }
+    req.authData = {email: verified.email, userId: verified.userId };
     next();
   } catch (e) {
     res.status(401).send({

@@ -36,7 +36,8 @@ router.post('/api/posts', checkAuth, multer({storage: storage}).single('image'),
   const post = new Post({
     title: req.body.title,
     description: req.body.description,
-    imagePath: url + "/images/" + req.file.filename
+    imagePath: url + "/images/" + req.file.filename,
+    author: req.authData.userId
   });
   post.save().then((createdPost) => {
     res.status(201).send({
@@ -44,7 +45,8 @@ router.post('/api/posts', checkAuth, multer({storage: storage}).single('image'),
       post: {
         ...createdPost,
         id: createdPost._id
-      }
+      },
+      author: createdPost.author
     });
   });
 });

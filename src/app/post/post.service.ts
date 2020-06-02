@@ -49,7 +49,7 @@ export class PostService {
     postData.append('description', data.description);
     postData.append('image', data.image);
 
-    this.http.post<{ message: string, post: Post }>(this.baseURL + '/api/posts', postData).subscribe((res) => {
+    this.http.post<{ message: string, post: Post, creator: string }>(this.baseURL + '/api/posts', postData).subscribe((res) => {
       // const post: Post = {id: res.post.id, title: data.title, description: data.description, imagePath: res.post.imagePath};
       // this.posts.push(post);
       // this.PostSub.next([...this.posts]);

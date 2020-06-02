@@ -82,6 +82,8 @@ export class AuthService {
       this.isAuthenticated = true;
       this.AuthenticationStatus.next(true);
       this.setAuthTimer(expiresIn / 1000);
+    } else {
+      this.logout();
     }
   }
 
