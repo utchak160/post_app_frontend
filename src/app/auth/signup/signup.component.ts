@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {NgForm} from '@angular/forms';
 import {AuthService} from '../auth.service';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-signup',
@@ -10,9 +11,16 @@ import {AuthService} from '../auth.service';
 export class SignupComponent implements OnInit {
 
   isLoading = false;
-  constructor(private authService: AuthService) { }
+  private authStatusSub: Subscription;
 
-  ngOnInit(): void {
+  constructor(public authService: AuthService) {}
+
+  ngOnInit() {
+    this.authStatusSub = this.authService.getAuthenticationStatus().subscribe(
+      authStatus => {
+        this.isLoading = false;
+      }
+    );
   }
 
   onSignUp(form: NgForm) {

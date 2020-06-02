@@ -1,26 +1,33 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Post} from '../post.model';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {PostService} from '../post.service';
 import {ActivatedRoute, ParamMap} from '@angular/router';
 import {mimeType} from './mime-type.validator';
+import {Subscription} from 'rxjs';
+import {AuthService} from '../../auth/auth.service';
 
 @Component({
   selector: 'app-post-create',
   templateUrl: './post-create.component.html',
   styleUrls: ['./post-create.component.css']
 })
-export class PostCreateComponent implements OnInit {
+export class PostCreateComponent implements OnInit, OnDestroy {
   post: Post;
   isLoading = false;
   form: FormGroup;
   imagePreview: string;
   private postId: string;
   private mode = 'create';
+  private authStatusSub = new Subscription();
 
-  constructor(private postService: PostService, private route: ActivatedRoute) { }
+  constructor(private postService: PostService, private route: ActivatedRoute, private authService: AuthService) {
+  }
 
   ngOnInit(): void {
+    this.authStatusSub = this.authService.getAuthenticationStatus().subscribe((status) => {
+      this.isLoading = false;
+    });
     this.form = new FormGroup({
       title: new FormControl(null, {validators: [Validators.required, Validators.minLength(3)]}),
       description: new FormControl(null, {validators: [Validators.required]}),
@@ -33,7 +40,13 @@ export class PostCreateComponent implements OnInit {
         this.isLoading = true;
         this.postService.getPost(this.postId).subscribe((postData) => {
           this.isLoading = false;
-          this.post = {id: postData.id, title: postData.title, description: postData.description, imagePath: postData.imagePath };
+          this.post = {
+            id: postData.id,
+            title: postData.title,
+            description: postData.description,
+            imagePath: postData.imagePath,
+            author: postData.author
+          };
           this.form.setValue({
             title: this.post.title,
             description: this.post.description,
@@ -48,6 +61,7 @@ export class PostCreateComponent implements OnInit {
   }
 
   onSavePost() {
+    this.isLoading = true;
     if (!this.form.valid) {
       return;
     }
@@ -74,5 +88,9 @@ export class PostCreateComponent implements OnInit {
       this.imagePreview = reader.result.toString();
     };
     reader.readAsDataURL(file);
+  }
+
+  ngOnDestroy(): void {
+    this.authStatusSub.unsubscribe();
   }
 }

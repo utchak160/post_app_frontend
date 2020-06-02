@@ -20,7 +20,7 @@ router.post('/signup', (req, res, next) => {
       })
         .catch(error => {
           res.status(500).send({
-            error: error
+            message: 'Invalid Authentication credentials'
           });
         });
     });
@@ -32,7 +32,7 @@ router.post('/login', (req, res, next) => {
     .then((user) => {
       if (!user) {
         res.status(404).send({
-          message: 'User not found'
+          message: 'Please SignUp and then Login'
         });
       }
       fetchedUser = user;
@@ -41,18 +41,19 @@ router.post('/login', (req, res, next) => {
     .then((result) => {
       if (!result) {
         res.status(401).send({
-          message: 'Auth Failed'
+          message: 'Email/Password is incorrect'
         });
       }
       const token = jwt.sign({email: fetchedUser.email, userId: fetchedUser._id }, 'hey_i_am_fine', { expiresIn: '1h' });
       res.status(200).send({
         token: token,
-        expiresIn: 3600
+        expiresIn: 3600,
+        userId: fetchedUser._id
       });
     })
     .catch(err => {
       return res.status(401).send({
-        message: 'Auth Failed'
+        message: 'Invalid Credentials'
       });
     });
 });

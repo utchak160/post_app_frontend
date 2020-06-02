@@ -48,6 +48,10 @@ router.post('/api/posts', checkAuth, multer({storage: storage}).single('image'),
       },
       author: createdPost.author
     });
+  }).catch((e) => {
+    res.status(500).send({
+      message: 'Creating post failed!'
+    });
   });
 });
 
@@ -70,6 +74,10 @@ router.get('/api/posts', async (req, res, next) => {
         maxCount: count
       });
     });
+  }).catch(err => {
+    res.status(500).send({
+      message: 'Unable to fetch posts'
+    });
   });
 });
 
@@ -77,6 +85,10 @@ router.get('/api/posts/:id', async (req, res, next) => {
   const post = await Post.findById(req.params.id);
   if (post) {
     res.send(post);
+  } else {
+    res.status(500).send({
+      message: 'Unable to fetch post'
+    });
   }
 });
 
@@ -90,17 +102,38 @@ router.put('/api/posts/:id', checkAuth, multer({storage: storage}).single('image
     _id: req.body.id,
     title: req.body.title,
     content: req.body.content,
-    imagePath: imagePath
+    imagePath: imagePath,
+    author: req.authData.userId
   });
-  console.log(post);
-  Post.updateOne({_id: req.params.id}, post).then(result => {
-    res.status(200).json({message: "Update successful!"});
+  Post.updateOne({_id: req.params.id, author: req.authData.userId}, post).then(result => {
+    if (result.nModified > 0) {
+      res.status(200).json({message: "Update successful!"});
+    } else {
+      res.status(401).send({
+        message: 'Auth Failed'
+      });
+    }
+  }).catch(err => {
+    res.status(500).send({
+      message: 'Unable to Update post'
+    });
   });
 });
 
-router.delete('/api/posts/:id', checkAuth, async (req, res, next) => {
-  await Post.deleteOne({_id: req.params.id});
-  res.send({message: 'Removed Successfully'});
+router.delete('/api/posts/:id', checkAuth, (req, res, next) => {
+  Post.deleteOne({_id: req.params.id, author: req.authData.userId}).then((result) => {
+    if (result.n > 0) {
+      res.send({message: 'Removed Successfully'});
+    } else {
+      res.status(401).send({
+        message: 'Auth Failed'
+      });
+    }
+  }).catch(err => {
+    res.status(500).send({
+      message: 'Unable to delete posts'
+    });
+  });
 });
 
 module.exports = router;

@@ -29,7 +29,8 @@ export class PostService {
                 title: post.title,
                 description: post.description,
                 id: post._id,
-                imagePath: post.imagePath
+                imagePath: post.imagePath,
+                author: post.author
               };
             }), maxCount: postData.maxCount
           };
@@ -72,7 +73,8 @@ export class PostService {
         id: postId,
         title: data.title,
         description: data.description,
-        imagePath: data.image
+        imagePath: data.image,
+        author: null
       };
     }
     this.http
@@ -94,13 +96,14 @@ export class PostService {
   }
 
   getPost(id: string) {
-    return this.http.get<{ _id: string, title: string, description: string, imagePath: string }>(this.baseURL + '/api/posts/' + id).pipe(
+    return this.http.get<{ _id: string, title: string, description: string, imagePath: string, author: string }>(this.baseURL + '/api/posts/' + id).pipe(
       map((res) => {
         return {
           id: res._id,
           title: res.title,
           description: res.description,
-          imagePath: res.imagePath
+          imagePath: res.imagePath,
+          author: res.author
         };
       })
     );
