@@ -1,0 +1,18 @@
+{
+  "name": "social-frontend",
+  "version": "0.0.0",
+  "scripts": {
+    "start:server": "nodemon server.js"
+  },
+  "private": true,
+  "dependencies": {
+    "bcrypt": "^4.0.1",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.9.16",
+    "mongoose-unique-validator": "^2.0.3",
+    "multer": "^1.4.2",
+  }
+}
