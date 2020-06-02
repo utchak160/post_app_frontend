@@ -76,7 +76,7 @@ exports.updatePost =  (req, res, next) => {
     author: req.authData.userId
   });
   Post.updateOne({_id: req.params.id, author: req.authData.userId}, post).then(result => {
-    if (result.nModified > 0) {
+    if (result.n > 0) {
       res.status(200).json({message: "Update successful!"});
     } else {
       res.status(401).send({

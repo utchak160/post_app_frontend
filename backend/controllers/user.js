@@ -41,7 +41,7 @@ exports.userLogin = (req, res, next) => {
           message: 'Email/Password is incorrect'
         });
       }
-      const token = jwt.sign({email: fetchedUser.email, userId: fetchedUser._id }, 'hey_i_am_fine', { expiresIn: '1h' });
+      const token = jwt.sign({email: fetchedUser.email, userId: fetchedUser._id }, process.env.SECRET_KEY, { expiresIn: '1h' });
       res.status(200).send({
         token: token,
         expiresIn: 3600,
