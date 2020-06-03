@@ -1,6 +1,0 @@
-{
-  "env": {
-    "MONGODB_URL": "mongodb+srv://taskapp:@Lucknow160@cluster0-jfyyd.mongodb.net/mean-project?w=majority",
-    "SECRET_KEY": "hey_i_am_fine"
-  }
-}
