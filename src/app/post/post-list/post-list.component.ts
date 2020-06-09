@@ -4,6 +4,9 @@ import {Post} from '../post.model';
 import {PostService} from '../post.service';
 import {Subscription} from 'rxjs';
 import {AuthService} from '../../auth/auth.service';
+import * as fromApp from '../../store/index';
+import {select, Store} from '@ngrx/store';
+import {DELETE_POST} from '../store/post.action';
 
 @Component({
   selector: 'app-post-list',
@@ -22,24 +25,34 @@ export class PostListComponent implements OnInit, OnDestroy {
   private PostSub = new Subscription();
   private AuthSub = new Subscription();
 
-  constructor(private postService: PostService, private authService: AuthService) { }
+  constructor(private postService: PostService, private authService: AuthService, private store: Store<fromApp.AppState>) { }
 
   ngOnInit(): void {
     this.isLoading = true;
     this.postService.getPosts(this.postPerPage, this.pageNumber);
-    this.userId = this.authService.getUserId();
-    this.PostSub = this.postService.UpdatedPost().subscribe(
-      (res) => {
-        this.isLoading = false;
-        this.posts = res.posts;
-        this.totalPosts = res.pageCount;
-      }
-    );
-    this.isAuthenticated = this.authService.getIsAuthenticated();
-    this.AuthSub = this.authService.getAuthenticationStatus().subscribe((status) => {
-      this.userId = this.authService.getUserId();
-      this.isAuthenticated = status;
+    this.PostSub = this.store.pipe(select('post')).subscribe((postData) => {
+      this.isLoading = false;
+      this.posts = postData.posts;
+      this.totalPosts = postData.count;
+      console.log('[Post store]', postData);
     });
+    this.AuthSub = this.store.pipe(select('user')).subscribe((res) => {
+      this.userId = res.id;
+      this.isAuthenticated = res.isLoggedIn;
+    });
+    // this.userId = this.authService.getUserId();
+    // this.PostSub = this.postService.UpdatedPost().subscribe(
+    //   (res) => {
+    //     // this.isLoading = false;
+    //     // this.posts = res.posts;
+    //     // this.totalPosts = res.pageCount;
+    //   }
+    // );
+    // this.isAuthenticated = this.authService.getIsAuthenticated();
+    // this.AuthSub = this.authService.getAuthenticationStatus().subscribe((status) => {
+    //   // this.userId = this.authService.getUserId();
+    //   this.isAuthenticated = status;
+    // });
   }
   ngOnDestroy(): void {
     this.PostSub.unsubscribe();
@@ -55,6 +68,7 @@ export class PostListComponent implements OnInit, OnDestroy {
 
   onDelete(id: string) {
     this.postService.deletePost(id).subscribe(() => {
+      this.store.dispatch(DELETE_POST({id}));
       this.postService.getPosts(this.postPerPage, this.pageNumber);
     }, error => {
       this.isLoading = false;

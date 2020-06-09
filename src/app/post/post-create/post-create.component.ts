@@ -6,6 +6,9 @@ import {ActivatedRoute, ParamMap} from '@angular/router';
 import {mimeType} from './mime-type.validator';
 import {Subscription} from 'rxjs';
 import {AuthService} from '../../auth/auth.service';
+import {select, Store} from '@ngrx/store';
+import * as fromApp from '../../store/index';
+import {map} from 'rxjs/operators';
 
 @Component({
   selector: 'app-post-create',
@@ -21,13 +24,20 @@ export class PostCreateComponent implements OnInit, OnDestroy {
   private mode = 'create';
   private authStatusSub = new Subscription();
 
-  constructor(private postService: PostService, private route: ActivatedRoute, private authService: AuthService) {
+  constructor(private postService: PostService,
+              private route: ActivatedRoute,
+              private authService: AuthService,
+              private store: Store<fromApp.AppState>) {
   }
 
   ngOnInit(): void {
-    this.authStatusSub = this.authService.getAuthenticationStatus().subscribe((status) => {
-      this.isLoading = false;
-    });
+    // this.authStatusSub = this.authService.getAuthenticationStatus().subscribe((status) => {
+    //   this.isLoading = false;
+    // });
+    this.store.pipe(select('user')).pipe(map(state => state.isLoggedIn)).subscribe(
+      (res) => {
+        this.isLoading = false;
+      });
     this.form = new FormGroup({
       title: new FormControl(null, {validators: [Validators.required, Validators.minLength(3)]}),
       description: new FormControl(null, {validators: [Validators.required]}),
@@ -38,6 +48,10 @@ export class PostCreateComponent implements OnInit, OnDestroy {
         this.mode = 'update';
         this.postId = paramMap.get('postId');
         this.isLoading = true;
+        this.store.pipe(select('post')).pipe(
+          map(state => state.posts.filter(post => post.id === this.postId))).subscribe((res) => {
+            console.log(res);
+        });
         this.postService.getPost(this.postId).subscribe((postData) => {
           this.isLoading = false;
           this.post = {

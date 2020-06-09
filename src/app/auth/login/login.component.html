@@ -25,6 +25,7 @@
         #passwordInput="ngModel"
         matInput
         autocomplete="off">
+      <mat-icon matSuffix *ngIf="passwordInput.control.dirty && passwordInput.valid" color="primary">done</mat-icon>
       <mat-error *ngIf="!passwordInput.valid">Please enter a valid Password</mat-error>
     </mat-form-field>
 

@@ -1,10 +1,14 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {AuthData} from './auth-data.model';
-import {environment} from '../../environments/environment.prod';
+import {environment} from '../../environments/environment';
 import {Subject} from 'rxjs';
 import {Router} from '@angular/router';
 import {AuthConstant} from './auth-constant';
+import {Store} from '@ngrx/store';
+import * as fromApp from '../store/index';
+import * as fromAuthAction from './store/auth.action';
+import {filter, take} from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -17,18 +21,25 @@ export class AuthService {
   private isAuthenticated = false;
   private AuthenticationStatus = new Subject<boolean>();
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(private http: HttpClient, private router: Router, private store: Store<fromApp.AppState>) {
   }
 
   createUser(email: string, password: string) {
     const authData: AuthData = {email, password};
-    this.http.post<{ message: string, user: any }>(this.baseUrl + '/api/user/signup', authData).subscribe((response) => {
-      this.router.navigate(['/login']);
-    }, error => {
-      this.AuthenticationStatus.next(false);
-      this.isAuthenticated = false;
-      console.log(error);
-    });
+    this.http.post<{ message: string, user: any }>(this.baseUrl + '/api/user/signup', authData)
+      .pipe(
+        take(1),
+        filter(i => !i),
+      )
+      .subscribe((response) => {
+        this.store.dispatch(fromAuthAction.RegisterSuccess({email: response.user.email, id: response.user._id}));
+        this.router.navigate(['/login']);
+      }, error => {
+        this.AuthenticationStatus.next(false);
+        this.isAuthenticated = false;
+        this.store.dispatch(fromAuthAction.RegisterFailed());
+        console.log(error);
+      });
   }
 
   getIsAuthenticated() {
@@ -62,11 +73,13 @@ export class AuthService {
           const now = new Date();
           const expirationDate = new Date(now.getTime() + expiresIn * 1000);
           this.saveAuthData(token, expirationDate, response.userId);
+          this.store.dispatch(fromAuthAction.LoginSuccess({ email, id: response.userId}));
           this.router.navigate(['/']);
         }
       }, error => {
         this.AuthenticationStatus.next(false);
         this.isAuthenticated = false;
+        this.store.dispatch(fromAuthAction.LoginFailed());
         console.log(error);
       });
   }
@@ -78,6 +91,7 @@ export class AuthService {
     this.userId = null;
     clearTimeout(this.tokenTimer);
     this.clearAuthData();
+    this.store.dispatch(fromAuthAction.Logout());
     this.router.navigate(['/']);
   }
 
@@ -93,6 +107,7 @@ export class AuthService {
       this.isAuthenticated = true;
       this.AuthenticationStatus.next(true);
       this.userId = userId;
+      this.store.dispatch(fromAuthAction.LoginSuccess({id: userId, email: null}));
       this.setAuthTimer(expiresIn / 1000);
     } else {
       this.logout();

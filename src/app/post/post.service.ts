@@ -1,10 +1,13 @@
 import {Injectable} from '@angular/core';
 import {Post} from './post.model';
 import {Subject} from 'rxjs';
-import {environment} from '../../environments/environment.prod';
+import {environment} from '../../environments/environment';
 import {HttpClient} from '@angular/common/http';
 import {map} from 'rxjs/operators';
 import {Router} from '@angular/router';
+import {Store} from '@ngrx/store';
+import * as fromApp from '../store/index';
+import * as PostActions from './store/post.action';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +18,7 @@ export class PostService {
   posts: Post[] = [];
   PostSub = new Subject<{ posts: Post[], pageCount: number }>();
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(private http: HttpClient, private router: Router, private store: Store<fromApp.AppState>) {
   }
 
   getPosts(pageSize: number, currentPage: number) {
@@ -36,7 +39,8 @@ export class PostService {
           };
         })).subscribe((res) => {
         this.posts = res.post;
-        this.PostSub.next({posts: [...this.posts], pageCount: res.maxCount});
+        this.store.dispatch(PostActions.GET_POSTS({posts: [...this.posts], count: res.maxCount}));
+        // this.PostSub.next({posts: [...this.posts], pageCount: res.maxCount});
       });
   }
 
@@ -50,8 +54,17 @@ export class PostService {
     postData.append('description', data.description);
     postData.append('image', data.image);
 
-    this.http.post<{ message: string, post: Post, creator: string }>(this.baseURL + '/api/posts', postData).subscribe((res) => {
-      // const post: Post = {id: res.post.id, title: data.title, description: data.description, imagePath: res.post.imagePath};
+    this.http.post<{ message: string, post: Post, author: string }>(this.baseURL + '/api/posts', postData).subscribe((res) => {
+      const post: Post = {
+        id: res.post.id,
+        title: data.title,
+        description: data.description,
+        imagePath: res.post.imagePath,
+        author: res.author
+      };
+      console.log('[response]', res);
+      console.log('[post]', post);
+      this.store.dispatch(PostActions.ADD_POST({ post }));
       // this.posts.push(post);
       // this.PostSub.next([...this.posts]);
       this.router.navigate(['/']);
@@ -80,6 +93,7 @@ export class PostService {
     this.http
       .put(this.baseURL + '/api/posts/' + postId, postData)
       .subscribe(response => {
+
         // const updatedPosts = [...this.posts];
         // const oldPostIndex = updatedPosts.findIndex(p => p.id === postId);
         // const post: Post = {
