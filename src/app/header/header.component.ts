@@ -28,7 +28,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       map(state => state.isLoggedIn),
     ).subscribe((res) => {
       this.isAuthenticated = res;
-      console.log('[header]', res);
     });
   }
 
